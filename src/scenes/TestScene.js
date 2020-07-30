@@ -12,7 +12,7 @@ export default class TestScene extends Phaser.Scene {
     }
 
     create() {
-        const logo = this.add.image(400, 150, "logo");
+        const logo = this.add.image(400, 150, "logo").setInteractive();
 
         this.tweens.add({
             targets: logo,
@@ -22,6 +22,11 @@ export default class TestScene extends Phaser.Scene {
             yoyo: true,
             loop: -1
         });
+
+        this.input.on('gameobjectdown', (pointer, button) => {
+          window.open('https://phaser.io/', '_blank');
+        }, this);
+
     }
 
 };

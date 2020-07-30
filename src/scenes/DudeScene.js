@@ -17,6 +17,8 @@ const platformSpecs = [
     {x: 1550, y: 220},
 ];
 
+const DOUBLE_JUMP_DELAY = 1000;
+
 export default class DudeScene extends Phaser.Scene {
     /*
     Teleporters?
@@ -61,7 +63,6 @@ export default class DudeScene extends Phaser.Scene {
         const bombs = this.physics.add.group();
         this.physics.add.collider(bombs, platforms);
         this.physics.add.overlap(bombs, player, this.hitBomb, null, this);
-        
         return bombs;
     }
 
@@ -117,6 +118,11 @@ export default class DudeScene extends Phaser.Scene {
             this.sound.playAudioSprite('sfx', 'ping');
             this.score += 1;
             this.scoreText.setText('Score: ' + this.score);
+            console.log(`trigger = ${star.bombTrigger}`);
+            if (star.bombTrigger) {
+                this.bombsEnabled = true;
+            }
+            console.log(`${this.totalStars} vs ${this.score}`);
     }
         
         
@@ -135,10 +141,16 @@ export default class DudeScene extends Phaser.Scene {
         
         stars.children.iterate(function (child) {
             child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+            if (Math.ceil(Math.random() * 10) > 8) {
+                child.bombTrigger = true;
+            } else {
+                child.bombTrigger = false;
+            }
         });
-        
+
+        this.totalStars = stars.children.entries.length;
+
         this.physics.add.collider(stars, platforms);
-        
         this.physics.add.overlap(stars, this.player,this.collectStar, null, this);
         this.scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
         this.scoreText.setScrollFactor(0); // I want to see my score wherever I go..
@@ -151,7 +163,7 @@ export default class DudeScene extends Phaser.Scene {
     }
 
     createBombs(time) {
-        if ((this.score > 10) && (this.score < 20) &&this.bombs.countActive() === 0) {
+        if (this.bombsEnabled && (this.bombs.countActive() === 0)) {
            for (let counter = 0; counter < 5; counter++) {
                const x = (this.player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
                const bomb = this.bombs.create(x, 16, 'bomb');
@@ -160,13 +172,19 @@ export default class DudeScene extends Phaser.Scene {
                bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
                bomb.time = time + 10000;
            }
+           this.bombsEnabled = false;
         }
-
     }
 
     update(time) {
         if(this.gameOver)  {
-            return;
+            console.log("You lost :-(");
+            this.scene.start('MenuScene', {message: "You Lost!"});
+        }
+
+        if (this.totalStars === this.score) {
+            console.log("You win!");
+            this.scene.start('MenuScene', {message: "You Won!"});
         }
 
         this.createBombs(time);
@@ -202,10 +220,13 @@ export default class DudeScene extends Phaser.Scene {
                     this.player.setVelocityY(-500);
                     this.canDoubleJump = true;
                     this.lastJumpTime = time;
-                } else if (this.canDoubleJump && (time > this.lastJumpTime + 1000)) {
+                    this.sound.playAudioSprite('sfx', 'meow');
+                } else if (this.canDoubleJump && (time > (this.lastJumpTime + DOUBLE_JUMP_DELAY))) {
                     this.canDoubleJump = false;
                     this.player.setVelocityY(-550);
+                    this.sound.playAudioSprite('sfx', 'meow');
                 }
+                
             }
             this.player.setVelocityX(velocityX)
         }

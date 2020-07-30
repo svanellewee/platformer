@@ -4,25 +4,27 @@ import skyImg from '../../assets/sky.png';
 
 
 const markers = [
-    { name: 'New Game', nextScene: 'DudeScene', },
-    { name: 'Credits', nextScene: 'CreditsScene', },
+    { name: 'back', nextScene: 'MenuScene', },
+    { name: "Phaser!", nextScene: 'TestScene'},
 ];
 
 function setButtonFrame(button, frame) {
     button.frame = button.scene.textures.getFrame('button', frame);
 }
 
-export default class MenuScene extends Phaser.Scene {
+
+
+export default class CreditsScene extends Phaser.Scene {
     constructor() {
         super();
-        this.initMessage = "Start Game";
+        this.initMessage = "Compiled by Stephan van Ellewee\nout of examples found in the\nPhaser community";
         this.currentOption = 0;
     }
 
     init(data) {
         if (typeof data !== 'undefined') {
            console.log(`data passed ${data.message}`);
-           this.initMessage = data.message;
+           this.initMessage = data.message || this.initMessage;
         }
     }
 
@@ -34,7 +36,7 @@ export default class MenuScene extends Phaser.Scene {
 
     create() {
         this.add.image(400, 300, 'sky');
-        this.headerText = this.add.text(400, 16, this.initMessage, { fontSize: '32px', fill: '#fff' }).setOrigin(0.5);
+        this.headerText = this.add.text(0, 16, this.initMessage, { fontSize: '32px', fill: '#fff' });
         markers.forEach((marker, index) =>{
             this.makeButton(marker, index)
         });
@@ -58,13 +60,9 @@ export default class MenuScene extends Phaser.Scene {
 
         this.input.on('gameobjectup', (pointer, button) => {
             setButtonFrame(button, 0);
-            const data = button.getData('data');
-            if (data === 'newGame')
-                this.scene.start('DudeScene');
-            else if (data === 'credits')
-                this.scene.start('CreditsScene');
-            else
-                console.log(`unfinished button ${data}`);
+            const nextScene = button.getData('nextScene');
+            console.log(nextScene);
+            this.scene.start(nextScene);
         });
     }
 
@@ -111,11 +109,10 @@ export default class MenuScene extends Phaser.Scene {
         }
     }
 
-
     makeButton(buttonMeta, index) {
         const button = this.add.image(400,  300 + index*40, 'button', 1).setInteractive();
         button.setData('index', index);
-        button.setData('data', buttonMeta.nextScene);
+        button.setData('nextScene', buttonMeta.nextScene);
         button.setScale(2, 1.5);
 
         const text = this.add.bitmapText(button.x - 40, button.y - 8, 'nokia', buttonMeta.name, 16);
